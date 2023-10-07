@@ -1,0 +1,7 @@
+database.db
+database.db-shm
+database.db-wal
+rights-rise
+frontend/node_modules
+frontend/dist
+frontend/package-lock.json
