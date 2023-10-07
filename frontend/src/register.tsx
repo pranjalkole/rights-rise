@@ -132,14 +132,14 @@ function RegisterBody() {
   }
 
   function passwordChange(e: React.ChangeEvent<HTMLInputElement>) {
-    let newPasswords = passwords;
+    let newPasswords = [...passwords];
     newPasswords[0] = e.target.value
     console.log(newPasswords);
     setPasswords(newPasswords);
   }
 
   function cnfpasswordChange(e: React.ChangeEvent<HTMLInputElement>) {
-    let newPasswords = passwords;
+    let newPasswords = [...passwords];
     newPasswords[1] = e.target.value;
     console.log(newPasswords);
     setPasswords(newPasswords);
@@ -160,7 +160,7 @@ function RegisterBody() {
         <div className="input-container">
           <label htmlFor="cnfpassword">Confirm Password</label>
           <input type="password" name="cnfpassword" id="cnfpassword" onChange={cnfpasswordChange} required />
-          { (passwords[1] !== "" && passwords[0] === passwords[1]) ?
+          { passwords[0] === passwords[1] ?
           <p id="password-matching">
             <i className='fa fa-check'></i>
           </p> :
@@ -172,7 +172,8 @@ function RegisterBody() {
         <div className="input-container">
           <input type="radio" name="role" id="role1" value="User" defaultChecked onChange={roleChange} />
           <label htmlFor="role1">User</label>
-
+        </div>
+        <div className="input-container">
           <input type="radio" name="role" id="role2" value="Admin" onChange={roleChange} />
           <label htmlFor="role2">Admin</label>
         </div>
