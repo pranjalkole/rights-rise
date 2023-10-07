@@ -21,8 +21,8 @@
  *
  */
 
-import { signInUser, resetPassword } from "./firebase.ts"
-import { sendEmailVerification } from "firebase/auth"
+import { auth } from "./firebase.ts"
+import { sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth"
 import "./login.css"
 
 const login_form = document.querySelector("form#login")!;
@@ -33,7 +33,7 @@ let isPasswordResetForm = false;
 login_form.addEventListener("submit", (e: Event) => {
   e.preventDefault();
   if (isPasswordResetForm) {
-    resetPassword((login_form.querySelector("#email-forgot-password")! as HTMLFormElement).value)
+    sendPasswordResetEmail(auth, (login_form.querySelector("#email-forgot-password")! as HTMLFormElement).value)
       .then(() => {
         alert("Link to reset password sent to your email");
         window.location.reload();
@@ -60,7 +60,7 @@ login_form.addEventListener("submit", (e: Event) => {
 
   const loader: HTMLElement = login_form.querySelector(".loader")!;
   loader.style.display = "flex";
-  signInUser(email.value, password.value)
+  signInWithEmailAndPassword(auth, email.value, password.value)
     .then((userCredential) => {
       console.log(userCredential);
       if (!userCredential.user.emailVerified) {

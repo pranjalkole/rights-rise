@@ -25,12 +25,7 @@ import { initializeApp } from "firebase/app";
 import {
   getAuth,
   createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
   sendEmailVerification,
-  sendPasswordResetEmail,
-  onAuthStateChanged,
-  NextOrObserver,
-  User
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -45,23 +40,11 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+export const auth = getAuth(app);
 
 export function registerUser(email: string, password: string) {
   return createUserWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
       sendEmailVerification(userCredential.user);
     });
-}
-
-export function signInUser(email: string, password: string) {
- return signInWithEmailAndPassword(auth, email, password);
-}
-
-export function resetPassword(email: string) {
-  return sendPasswordResetEmail(auth, email);
-}
-
-export function _onAuthStateChanged(nextOrObserver: NextOrObserver<User>) {
-  return onAuthStateChanged(auth, nextOrObserver);
 }

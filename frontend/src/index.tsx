@@ -20,32 +20,30 @@
  *
  */
 
-import { _onAuthStateChanged } from "./firebase.ts"
+import { onAuthStateChanged, signOut } from "firebase/auth"
+import { auth } from "./firebase.ts"
+import { Roles } from "./misc.ts"
 import React, { useState, useEffect } from "react"
 import ReactDOM from "react-dom/client"
 import "./index.css"
-import "./App.css"
-
-enum Roles {
-  User = 1,
-  Admin
-}
-
-let email: string;
-let role: string;
 
 function App() {
   const [count, setCount] = useState(0)
   const [signedIn, setSignedIn] = useState(false);
 
+  let email: string = "";
+  let role: string = "";
+  let emailVerified: boolean = false;
+
   useEffect(() => {
-    return _onAuthStateChanged((user) => {
+    return onAuthStateChanged(auth, (user) => {
       if (!user) {
         setSignedIn(false);
         return;
       }
 
       email = user.email!;
+      emailVerified = user.emailVerified;
       const data = {
         email: email
       }
@@ -75,21 +73,32 @@ function App() {
     });
   }, []);
 
+  function handleLogout() {
+    signOut(auth);
+  }
+
   return (
     <>
-      <h1>RightsRise</h1>
+      <header>
+        <h1>RightsRise</h1>
+      </header>
       <div className="card">
         <button onClick={() => setCount((count) => count + 1)}>
           count is {count}
         </button>
       </div>
-      {signedIn &&
+      {signedIn ?
       <p>
-        Signed in as {email} ({role})
-      </p>}
+        Signed in as {email} ({role}). Your email is {!emailVerified && <>not</>} verified <br />
+        <a href="#" onClick={handleLogout}>Logout</a>
+      </p> :
+      <p>You are logged out</p>}
       <a href="/login.html">Login</a>
       <br />
       <a href="/register.html">Register</a>
+      <footer>
+        <h1>Game Icon</h1>
+      </footer>
     </>
   )
 }
