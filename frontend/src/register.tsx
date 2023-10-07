@@ -133,16 +133,14 @@ function RegisterBody() {
   }
 
   function passwordChange(e: React.ChangeEvent<HTMLInputElement>) {
-    let newPasswords = [...passwords];
+    const newPasswords = [...passwords];
     newPasswords[0] = e.target.value
-    console.log(newPasswords);
     setPasswords(newPasswords);
   }
 
   function cnfpasswordChange(e: React.ChangeEvent<HTMLInputElement>) {
-    let newPasswords = [...passwords];
+    const newPasswords = [...passwords];
     newPasswords[1] = e.target.value;
-    console.log(newPasswords);
     setPasswords(newPasswords);
   }
 

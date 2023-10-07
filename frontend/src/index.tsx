@@ -27,13 +27,13 @@ import React, { useState, useEffect } from "react"
 import ReactDOM from "react-dom/client"
 import "./index.css"
 
+let email: string;
+let role: string;
+let emailVerified: boolean;
+
 function App() {
   const [count, setCount] = useState(0)
   const [signedIn, setSignedIn] = useState(false);
-
-  let email: string = "";
-  let role: string = "";
-  let emailVerified: boolean = false;
 
   useEffect(() => {
     return onAuthStateChanged(auth, (user) => {
