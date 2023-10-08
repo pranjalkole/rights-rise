@@ -4,26 +4,24 @@
  *
  * @license AGPL-3.0-only
  *
- * Copyright (C) 2023  Pranjal Kole <pranjal.kole7@gmail.com>
  * Copyright (C) 2023  Hemant Kumar <ytbhemant@gmail.com>
+ * Copyright (C) 2023  Pranjal Kole <pranjal.kole7@gmail.com>
  *
- * This program is free software: you can redistribute it and/or modify
+ * The following code is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, version 3 of the License only.
  *
- * This program is distributed in the hope that it will be useful,
+ * This code is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 import { auth } from "./firebase.ts"
 import { sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth"
 import "./login.css"
+import "./all.css"
 
 const login_form = document.querySelector("form#login")!;
 const email: HTMLFormElement = login_form.querySelector("input[type=email]")!;

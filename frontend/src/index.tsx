@@ -1,4 +1,4 @@
-/** 
+/**
  *
  * @source: https://github.com/pranjalkole/rights-rise
  *
@@ -6,23 +6,20 @@
  *
  * Copyright (C) 2023  Pranjal Kole <pranjal.kole7@gmail.com>
  *
- * This program is free software: you can redistribute it and/or modify
+ * The following code is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, version 3 of the License only.
  *
- * This program is distributed in the hope that it will be useful,
+ * This code is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 import { onAuthStateChanged, signOut } from "firebase/auth"
 import { auth } from "./firebase.ts"
-import { Roles } from "./misc.ts"
+import { Role } from "./misc.ts"
 import React, { useState, useEffect } from "react"
 import ReactDOM from "react-dom/client"
 import "./index.css"
@@ -30,6 +27,22 @@ import "./index.css"
 let email: string;
 let role: string;
 let emailVerified: boolean;
+
+function Header() {
+  return (
+    <header>
+      <h1>RightsRise</h1>
+    </header>
+  )
+}
+
+function Footer() {
+  return (
+    <footer>
+      <h1>Game Icon</h1>
+    </footer>
+  )
+}
 
 function App() {
   const [count, setCount] = useState(0)
@@ -59,9 +72,9 @@ function App() {
           return;
         }
         response.json().then((data) => {
-          if (data.role === Roles.User) {
+          if (data.role === Role.User) {
             role = "User";
-          } else if (data.role === Roles.Admin) {
+          } else if (data.role === Role.Admin) {
             role = "Admin";
           } else {
             role = "Bug in application, see console";
@@ -79,9 +92,7 @@ function App() {
 
   return (
     <>
-      <header>
-        <h1>RightsRise</h1>
-      </header>
+      <Header />
       <div className="card">
         <button onClick={() => setCount((count) => count + 1)}>
           count is {count}
@@ -96,9 +107,7 @@ function App() {
       <a href="/login.html">Login</a>
       <br />
       <a href="/register.html">Register</a>
-      <footer>
-        <h1>Game Icon</h1>
-      </footer>
+      <Footer />
     </>
   )
 }

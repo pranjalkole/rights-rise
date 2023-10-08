@@ -4,27 +4,26 @@
  *
  * @license AGPL-3.0-only
  *
- * Copyright (C) 2023  Pranjal Kole <pranjal.kole7@gmail.com>
  * Copyright (C) 2023  Hemant Kumar <ytbhemant@gmail.com>
+ * Copyright (C) 2023  Pranjal Kole <pranjal.kole7@gmail.com>
  *
- * This program is free software: you can redistribute it and/or modify
+ * The following code is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, version 3 of the License only.
  *
- * This program is distributed in the hope that it will be useful,
+ * This code is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- *
  */
 
+import { Role } from "./misc.ts"
 import { registerUser } from "./firebase.ts"
 import React, { useState } from "react"
 import ReactDOM from "react-dom/client"
 import "./login.css"
+import "./all.css"
 
 function Spinner({style}: {style: React.CSSProperties}) {
   return (
@@ -50,10 +49,6 @@ function RegisterBody() {
     Loading,
     Form,
     Success
-  }
-  enum Role {
-    User = 1,
-    Admin
   }
   const [state, setState] = useState(State.Form)
   const [role, setRole] = useState(Role.User)
