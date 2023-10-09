@@ -111,3 +111,4 @@ login_form.querySelector("#forgot-password-link")!.addEventListener("click", (e)
   `;
   isPasswordResetForm = true;
 });
+/* vim: set et sw=2: */

@@ -199,4 +199,4 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <RegisterPage />
   </React.StrictMode>,
 )
-
+/* vim: set et sw=2: */

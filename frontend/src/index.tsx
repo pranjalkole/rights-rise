@@ -28,10 +28,21 @@ let email: string;
 let role: string;
 let emailVerified: boolean;
 
-function Header() {
+function Header({ signedIn, handleLogout }: { signedIn: boolean, handleLogout: React.MouseEventHandler<HTMLAnchorElement> }) {
   return (
     <header>
       <h1>RightsRise</h1>
+      {signedIn ?
+      <div>
+        <>{email} ({role})</>
+        |
+        <a href="#" onClick={handleLogout}>Logout</a>
+      </div> :
+      <div>
+        <a href="/login.html">Login</a>
+        |
+        <a href="/register.html">Register</a>
+      </div>}
     </header>
   )
 }
@@ -44,17 +55,26 @@ function Footer() {
   )
 }
 
+function Spinner() {
+  return (
+    <div className="loader">
+      <div className="spinner"></div>
+    </div>
+  )
+}
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [loading, setLoading] = useState(true);
   const [signedIn, setSignedIn] = useState(false);
 
   useEffect(() => {
     return onAuthStateChanged(auth, (user) => {
+      setLoading(true);
       if (!user) {
         setSignedIn(false);
+        setLoading(false);
         return;
       }
-
       email = user.email!;
       emailVerified = user.emailVerified;
       const data = {
@@ -69,6 +89,7 @@ function App() {
       }).then((response) => {
         if (response.status !== 200) {
           role = "Email does not exist in database"; // TODO
+          setLoading(false);
           return;
         }
         response.json().then((data) => {
@@ -81,32 +102,45 @@ function App() {
             console.log(data);
           }
           setSignedIn(true);
+          setLoading(false);
         });
       });
     });
   }, []);
 
   function handleLogout() {
-    signOut(auth);
+    setLoading(true);
+    signOut(auth).then(() => {
+      setLoading(false);
+    }).catch((error) => {
+      let message;
+      if (error.code == "auth/network-request-failed") {
+        message = "A network error has occurred. Check your internet connection and see if firebase is blocked";
+      } else {
+        message = "Bug in application or firebase, see console";
+        console.log(error);
+      }
+      alert(message);
+      setLoading(false);
+    });
+  }
+
+  if (loading) {
+    return <Spinner />
   }
 
   return (
     <>
-      <Header />
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-      </div>
+      <Header signedIn={signedIn} handleLogout={handleLogout} />
       {signedIn ?
-      <p>
-        Signed in as {email} ({role}). Your email is {!emailVerified && <>not</>} verified <br />
+      <>
+        <p>
+          Signed in as {email} ({role}). Your email is {!emailVerified && <>not</>} verified
+        </p>
         <a href="#" onClick={handleLogout}>Logout</a>
-      </p> :
+      </>
+        :
       <p>You are logged out</p>}
-      <a href="/login.html">Login</a>
-      <br />
-      <a href="/register.html">Register</a>
       <Footer />
     </>
   )
@@ -117,3 +151,4 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <App />
   </React.StrictMode>,
 )
+/* vim: set et sw=2: */

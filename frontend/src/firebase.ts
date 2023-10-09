@@ -45,3 +45,4 @@ export function registerUser(email: string, password: string) {
       sendEmailVerification(userCredential.user);
     });
 }
+/* vim: set et sw=2: */
