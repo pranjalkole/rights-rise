@@ -87,7 +87,7 @@ function RegisterBody() {
       return;
     }
 
-    registerUser(email.value, passwords[0])
+    registerUser(email.value, passwords[0], e.currentTarget.displayName.value)
       .then(() => {
         const data = {
           "email": email.value,
@@ -144,7 +144,11 @@ function RegisterBody() {
       <div className="container flexbox">
         <h1>Register</h1>
         <div className="input-container">
-          <label htmlFor="email">Email </label>
+          <label htmlFor="displayName">Display Name</label>
+          <input type="text" name="displayName" id="displayName" required />
+        </div>
+        <div className="input-container">
+          <label htmlFor="email">Email</label>
           <input type="email" name="email" id="email" required />
         </div>
         <div className="input-container">
@@ -154,13 +158,13 @@ function RegisterBody() {
         <div className="input-container">
           <label htmlFor="cnfpassword">Confirm Password</label>
           <input type="password" name="cnfpassword" id="cnfpassword" onChange={cnfpasswordChange} required />
-          { passwords[0] === passwords[1] ?
+          {passwords[1] !== "" && (passwords[0] === passwords[1] ?
           <p id="password-matching">
             <i className='fa fa-check'></i>
           </p> :
           <p id="password-matching" className="error">
             Passwords do not match
-          </p>
+          </p>)
           }
         </div>
         <div className="input-container">

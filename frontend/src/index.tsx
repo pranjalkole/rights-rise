@@ -24,6 +24,7 @@ import React, { useState, useEffect } from "react"
 import ReactDOM from "react-dom/client"
 import "./index.css"
 
+let displayName: string;
 let email: string;
 let role: string;
 let emailVerified: boolean;
@@ -34,7 +35,7 @@ function Header({ signedIn, handleLogout }: { signedIn: boolean, handleLogout: R
       <h1>RightsRise</h1>
       {signedIn ?
       <div>
-        <>{email} ({role})</>
+        <>{displayName} ({role})</>
         |
         <a href="#" onClick={handleLogout}>Logout</a>
       </div> :
@@ -75,6 +76,7 @@ function App() {
         setLoading(false);
         return;
       }
+      displayName = user.displayName!;
       email = user.email!;
       emailVerified = user.emailVerified;
       const data = {
@@ -104,6 +106,9 @@ function App() {
           setSignedIn(true);
           setLoading(false);
         });
+      }).catch((error) => {
+        alert("Could not fetch role from sqlite database, see console");
+        console.log(error);
       });
     });
   }, []);

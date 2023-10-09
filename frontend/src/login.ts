@@ -60,7 +60,6 @@ login_form.addEventListener("submit", (e: Event) => {
   loader.style.display = "flex";
   signInWithEmailAndPassword(auth, email.value, password.value)
     .then((userCredential) => {
-      console.log(userCredential);
       if (!userCredential.user.emailVerified) {
         sendEmailVerification(userCredential.user).then(() => {
           loader.style.display = "none";
@@ -79,6 +78,8 @@ login_form.addEventListener("submit", (e: Event) => {
         message = "User not found. Please register before logging in";
       } else if (error.code == "auth/invalid-email") {
         message = "Invalid email address";
+      } else if (error.code == "auth/wrong-password") {
+        message = "Wrong password";
       } else if (error.code === "auth/network-request-failed") {
         message = "A network error has occurred. Check your internet connection and see if firebase is blocked";
       } else if (error.code === "auth/too-many-requests") {

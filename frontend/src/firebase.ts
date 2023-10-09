@@ -23,6 +23,7 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   sendEmailVerification,
+  updateProfile
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -39,9 +40,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
-export function registerUser(email: string, password: string) {
+export function registerUser(email: string, password: string, displayName: string) {
   return createUserWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
+      updateProfile(userCredential.user, { displayName: displayName });
       sendEmailVerification(userCredential.user);
     });
 }
