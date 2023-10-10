@@ -19,7 +19,11 @@
  */
 
 import { auth } from "./firebase.ts"
-import { sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth"
+import {
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword
+} from "firebase/auth"
 import "./login.css"
 import "./all.css"
 

@@ -74,7 +74,8 @@ function RegisterBody() {
       setRole(Role.Admin);
     } else {
       /* This should never happen */
-      console.log("Bug in application")
+      alert("Bug in application, see console");
+      console.log("Invalid role", e.target.value);
     }
   }
 
@@ -185,11 +186,6 @@ function RegisterBody() {
 }
 
 function RegisterPage() {
-  const [loading, setLoading] = useState(true);
-  window.onload = () => {
-    setLoading(false);
-  }
-  if (loading) return <Spinner style={{}} />
   return (
     <>
       <RegisterHead />
