@@ -67,6 +67,7 @@ function Spinner() {
 function App() {
   const [loading, setLoading] = useState(true);
   const [signedIn, setSignedIn] = useState(false);
+  const [messages, setMessages] = useState<string[]>([]);
 
   useEffect(() => {
     return onAuthStateChanged(auth, (user) => {
@@ -113,6 +114,13 @@ function App() {
     });
   }, []);
 
+  useEffect(() => {
+    const evSource = new EventSource("/recvmsg");
+    evSource.onmessage = (event) => {
+      setMessages((messages) => [...messages, event.data]);
+    };
+  }, []);
+
   function handleLogout() {
     setLoading(true);
     signOut(auth).then(() => {
@@ -134,6 +142,16 @@ function App() {
     return <Spinner />
   }
 
+  function formSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const message = (signedIn ? displayName : "Anon") + ": " + e.currentTarget.message.value;
+    e.currentTarget.message.value = "";
+    fetch("/sendmsg", {
+      method: "POST",
+      body: message
+    });
+  }
+
   return (
     <>
       <Header signedIn={signedIn} handleLogout={handleLogout} />
@@ -143,9 +161,15 @@ function App() {
           Signed in as {email} ({role}). Your email is {!emailVerified && <>not</>} verified
         </p>
         <a href="#" onClick={handleLogout}>Logout</a>
-      </>
-        :
+      </> :
       <p>You are logged out</p>}
+      <div id="chat">
+        {messages.map((message) => <p>{message}</p>)}
+        <form onSubmit={formSubmit}>
+          <input id="message" />
+          <input type="submit" value="Send" />
+        </form>
+      </div>
       <Footer />
     </>
   )
