@@ -15,3 +15,4 @@ export default defineConfig({
     }
   }
 })
+/* vim: set et sw=2: */
