@@ -13,7 +13,7 @@ import {
   sendPasswordResetEmail,
   signInWithEmailAndPassword
 } from "firebase/auth"
-import "./login.css"
+import "./form.css"
 import "./all.css"
 
 const login_form = document.querySelector("form#login")!;

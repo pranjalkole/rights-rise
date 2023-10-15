@@ -7,19 +7,19 @@
  * Copyright (C) 2023  Pranjal Kole <pranjal.kole7@gmail.com>
  */
 
-import { Role } from "./misc.ts"
-import { registerUser } from "./firebase.ts"
-import React, { useState } from "react"
-import ReactDOM from "react-dom/client"
-import "./login.css"
-import "./all.css"
+// import { Role } from "./misc.ts";
+import { registerUser } from "./firebase.ts";
+import React, { useState } from "react";
+import ReactDOM from "react-dom/client";
+import "./form.css";
+import "./all.css";
 
-function Spinner({style}: {style: React.CSSProperties}) {
+function Spinner({ style }: { style: React.CSSProperties }) {
   return (
-    <div className="loader" style={style}> 
+    <div className="loader" style={style}>
       <div className="spinner"></div>
     </div>
-  )
+  );
 }
 
 function RegisterHead() {
@@ -30,43 +30,48 @@ function RegisterHead() {
       </a>
       <h1>RightsRise</h1>
     </header>
-  )
+  );
 }
 
 function RegisterBody() {
   enum State {
     Loading,
     Form,
-    Success
+    Success,
   }
-  const [state, setState] = useState(State.Form)
-  const [role, setRole] = useState(Role.User)
-  const [passwords, setPasswords] = useState(["", ""])
+  const [state, setState] = useState(State.Form);
+  // const [role, setRole] = useState(Role.User);
+  const [passwords, setPasswords] = useState(["", ""]);
 
   if (state == State.Success) {
     return (
-      <form id="register" className="flexbox">
+      <form id="register" className="main-form">
         <div className="successful flexbox">
           <i className="fas fa-check-circle"></i>
           <h2>Registration successful</h2>
-          <p>Email verification sent successfully. Please verify your email and login to continue.</p>
-          <a href="login.html" className="login-flow">Login</a>
+          <p>
+            Email verification sent successfully. Please verify your email and
+            login to continue.
+          </p>
+          <a href="login.html" className="login-flow">
+            Login
+          </a>
         </div>
       </form>
-    )
+    );
   }
 
-  function roleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (e.target.value == "User") {
-      setRole(Role.User);
-    } else if (e.target.value == "Admin") {
-      setRole(Role.Admin);
-    } else {
-      /* This should never happen */
-      alert("Bug in application, see console");
-      console.log("Invalid role", e.target.value);
-    }
-  }
+  // function roleChange(e: React.ChangeEvent<HTMLInputElement>) {
+  //   if (e.target.value == "User") {
+  //     setRole(Role.User);
+  //   } else if (e.target.value == "Admin") {
+  //     setRole(Role.Admin);
+  //   } else {
+  //     /* This should never happen */
+  //     alert("Bug in application, see console");
+  //     console.log("Invalid role", e.target.value);
+  //   }
+  // }
 
   function formSubmit(e: React.FormEvent<HTMLFormElement>) {
     setState(State.Loading);
@@ -77,18 +82,18 @@ function RegisterBody() {
       return;
     }
 
-    registerUser(email.value, passwords[0], e.currentTarget.displayName.value)
+    registerUser(email.value, passwords[0])
       .then(() => {
         const data = {
-          "email": email.value,
-          "role": role
+          email: email.value,
+          // role: role,
         };
         fetch("/api/register", {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify(data)
+          body: JSON.stringify(data),
         }).then((response) => {
           if (response.status != 201) {
             alert("Bug in application, see console");
@@ -97,17 +102,20 @@ function RegisterBody() {
             return;
           }
           setState(State.Success);
-        })
-      }).catch((error) => {
+        });
+      })
+      .catch((error) => {
         let message;
         if (error.code === "auth/weak-password") {
-          message = "The password is not strong enough. Password must be at least 6 characters long";
+          message =
+            "The password is not strong enough. Password must be at least 6 characters long";
         } else if (error.code === "auth/email-already-in-use") {
           message = "Email is already registered. Please login to continue";
         } else if (error.code === "auth/invalid-email") {
-          message = "The email address is not valid"
+          message = "The email address is not valid";
         } else if (error.code === "auth/network-request-failed") {
-          message = "A network error has occurred. Check your internet connection and see if firebase is blocked";
+          message =
+            "A network error has occurred. Check your internet connection and see if firebase is blocked";
         } else {
           message = "Bug in application or firebase, see console";
           console.log(error);
@@ -119,7 +127,7 @@ function RegisterBody() {
 
   function passwordChange(e: React.ChangeEvent<HTMLInputElement>) {
     const newPasswords = [...passwords];
-    newPasswords[0] = e.target.value
+    newPasswords[0] = e.target.value;
     setPasswords(newPasswords);
   }
 
@@ -130,7 +138,7 @@ function RegisterBody() {
   }
 
   return (
-    <form id="register" className="flexbox" onSubmit={formSubmit}>
+    <form id="register" className="main-form" onSubmit={formSubmit}>
       <div className="container flexbox">
         <h1>Register</h1>
         <div className="input-container">
@@ -143,35 +151,44 @@ function RegisterBody() {
         </div>
         <div className="input-container">
           <label htmlFor="password">Password</label>
-          <input type="password" name="password" id="password" onChange={passwordChange} required />
+          <input
+            type="password"
+            name="password"
+            id="password"
+            onChange={passwordChange}
+            required
+          />
         </div>
         <div className="input-container">
           <label htmlFor="cnfpassword">Confirm Password</label>
-          <input type="password" name="cnfpassword" id="cnfpassword" onChange={cnfpasswordChange} required />
-          {passwords[1] !== "" && (passwords[0] === passwords[1] ?
-          <p id="password-matching">
-            <i className='fa fa-check'></i>
-          </p> :
-          <p id="password-matching" className="error">
-            Passwords do not match
-          </p>)
-          }
+          <input
+            type="password"
+            name="cnfpassword"
+            id="cnfpassword"
+            onChange={cnfpasswordChange}
+            required
+          />
+          {passwords[1] !== "" &&
+            (passwords[0] === passwords[1] ? (
+              <p id="password-matching">
+                <i className="fa fa-check"></i>
+              </p>
+            ) : (
+              <p id="password-matching" className="error">
+                Passwords do not match
+              </p>
+            ))}
         </div>
-        <div className="input-container">
-          <input type="radio" name="role" id="role1" value="User" defaultChecked onChange={roleChange} />
-          <label htmlFor="role1">User</label>
-        </div>
-        <div className="input-container">
-          <input type="radio" name="role" id="role2" value="Admin" onChange={roleChange} />
-          <label htmlFor="role2">Admin</label>
-        </div>
+
         <input type="submit" value="Register" />
         <hr className="or" />
-        <a href="login.html" className="login-flow">Login</a>
+        <a href="login.html" className="login-flow">
+          Login
+        </a>
       </div>
       {state == State.Loading && <Spinner style={{ display: "flex" }} />}
     </form>
-  )
+  );
 }
 
 function RegisterPage() {
@@ -180,12 +197,12 @@ function RegisterPage() {
       <RegisterHead />
       <RegisterBody />
     </>
-  )
+  );
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <RegisterPage />
-  </React.StrictMode>,
-)
+  </React.StrictMode>
+);
 /* vim: set et sw=2: */
