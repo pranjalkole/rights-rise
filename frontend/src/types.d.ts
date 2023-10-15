@@ -1,1 +1,2 @@
-declare module './components/profilePicUpload';
+// importing external libraries with type any;
+declare module '*';

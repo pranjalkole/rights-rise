@@ -11,8 +11,11 @@ export default defineConfig({
         index: resolve(__dirname, "index.html"),
         register: resolve(__dirname, "register.html"),
         login: resolve(__dirname, "login.html"),
+        updateProfile: resolve(__dirname, "updateProfile.html"),
+
       }
     }
-  }
+  },
+  publicDir: 'public'
 })
 /* vim: set et sw=2: */
