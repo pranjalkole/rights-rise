@@ -4,17 +4,20 @@
 ### Dependencies
 - go
 - npm
-- sqlite3
+- openssl
   
 ### Installation
-Fetch npm dependencies with `make fetch`. Build with `make` and run with `./rights-rise`. If you are running a non-POSIX system, build the go binary with `go build` and frontend with `cd frontend && npm install && npm run build`.
-### ToDo
+Fetch npm dependencies with `make fetch`.
+Generate SSL certificate with `make cert`.
+Build with `make` and run with `./rights-rise`.
+If you are running a non-POSIX system, generate an SSL certificate at server.{cert,key}, build the go binary with `go build` and frontend with `cd frontend && npm install && npm run build`.
+
+### Todo
 [ ] Auth and profile management
 [ ] User Dashboard
 [ ] Admin Dashboard
 [ ] A Game (maybe more later)
 [ ] AI Chatbot
-[ ] Chatting between different users (mainly organisations(admins))
 [ ] Rewards and Coupons
 [ ] Share Achievements as Personalised Images
 
@@ -43,5 +46,3 @@ The platform is intended for children between the ages of 8 and 16, and will be 
 1. Increased legal literacy and awareness among children in India, enabling them to make informed decisions about their rights and responsibilities.
 2. Empowerment of children to stand up for their rights and the rights of others, leading to greater social justice and equity.
 3. Enhanced engagement and participation of children in legal processes and systems, leading to more effective and equitable outcomes.
-
-

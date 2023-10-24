@@ -337,6 +337,6 @@ func main() {
 	http.HandleFunc("/sendmsg", sendmsgHandler)
 	http.HandleFunc("/recvmsg", recvmsgHandler)
 
-	log.Println("Listening on port 8000")
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	log.Println("Listening at https://localhost:8000")
+	log.Fatal(http.ListenAndServeTLS(":8000", "server.crt", "server.key", nil))
 }
