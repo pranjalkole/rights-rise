@@ -12,7 +12,6 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   sendEmailVerification,
-  // updateProfile
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -36,8 +35,4 @@ export function registerUser(email: string, password: string) {
       return userCredential;
     });
 }
-
-
-
-
 /* vim: set et sw=2: */

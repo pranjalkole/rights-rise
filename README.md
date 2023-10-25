@@ -5,7 +5,7 @@
 - go
 - npm
 - openssl
-  
+
 ### Installation
 Fetch npm dependencies with `make fetch`.
 Generate SSL certificate with `make cert`.
@@ -30,8 +30,7 @@ To create a fun, interactive, and engaging gamified platform that educates child
 The platform is intended for children between the ages of 8 and 16, and will be designed to be inclusive and accessible to all children regardless of their socio-economic background, gender, or other demographic factors.
 
 ### Key features:
-1. Interactive gameplay that is based on real-life scenarios and challenges related to child rights, using storytelling, visualizations, and immersive experiences to educate children on 
-  their legal rights and procedures.
+1. Interactive gameplay that is based on real-life scenarios and challenges related to child rights, using storytelling, visualizations, and immersive experiences to educate children on their legal rights and procedures.
 2. Modular and adaptive learning modules that provide progressive and personalized learning paths, catering to individual user needs and preferences.
 3. Accessible and user-friendly design, incorporating multimedia elements and language translation features to promote inclusivity and accessibility.
 4. Social and community features enable children to connect and collaborate with other users, legal experts, and organizations, creating a sense of community and empowerment.

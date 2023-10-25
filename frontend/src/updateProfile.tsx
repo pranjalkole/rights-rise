@@ -1,6 +1,14 @@
+/**
+ * @source: https://github.com/pranjalkole/rights-rise
+ *
+ * @license AGPL-3.0-only
+ *
+ * Copyright (C) 2023  Hemant Kumar <ytbhemant@gmail.com>
+ */
+
 import React, { useState } from "react";
 import ReactDOM from "react-dom/client";
-import ProfilePictureUpload from "./components/profilePicUpload";
+import ProfilePictureUpload from "./components/profilePicUpload.tsx";
 import "./form.css";
 import "./all.css";
 

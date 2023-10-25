@@ -412,7 +412,6 @@ func recvDMHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnprocessableEntity) /* 422 Unprocessable Entity */
 		return
 	}
-	log.Println(m)
 
 	uid, err := verifyIdToken(m.IdToken)
 	if err != nil {
@@ -477,11 +476,6 @@ func main() {
 	err = conn.Exec("PRAGMA journal_mode=WAL")
 	if err != nil {
 		log.Fatal("Could not use WAL mode: ", err)
-	}
-
-	err = conn.Exec("PRAGMA busy_timeout=5000")
-	if err != nil {
-		log.Fatal("Could not set busy timeout: ", err)
 	}
 
 	err = conn.Exec("CREATE TABLE IF NOT EXISTS clients(uid TEXT, displayName TEXT, role INTEGER)")
