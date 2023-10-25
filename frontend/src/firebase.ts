@@ -33,6 +33,7 @@ export function registerUser(email: string, password: string) {
   return createUserWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
       sendEmailVerification(userCredential.user);
+      return userCredential;
     });
 }
 

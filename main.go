@@ -21,39 +21,75 @@
 package main
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
+	"errors"
 	"fmt"
 	"github.com/bvinc/go-sqlite-lite/sqlite3"
+	"github.com/golang-jwt/jwt/v5"
 	"io"
 	"log"
 	"net/http"
-	"net/mail"
-	"strings"
 	"sync"
 	"time"
 )
 
 /* Add all future roles in between USER AND ADMIN
  * or change the code that depends on it.
- * See registerHandler.serveHTTP() */
+ * See registerHandler.ServeHTTP() */
 const (
 	_ = iota
 	USER
 	ADMIN
 )
 
-type registerHandler struct {
-	db_write_lock sync.Mutex
+const FIREBASE_PROJECT_ID = "testing-ff0e3"
+
+var keys map[string]string
+
+func keyfunc(token *jwt.Token) (interface{}, error) {
+	kid := token.Header["kid"].(string)
+	publickey := keys[kid]
+	if len(publickey) == 0 {
+		return nil, errors.New("Invalid signing key ID")
+	}
+	block, _ := pem.Decode([]byte(publickey))
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if (err != nil) {
+		log.Println("Could not parse certificate:", err)
+		return nil, err
+	}
+	return cert.PublicKey.(*rsa.PublicKey), nil
 }
 
-func (h *registerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func verifyIdToken(token string) (string, error) {
+	parsedToken, err := jwt.Parse(token, keyfunc, jwt.WithValidMethods([]string{ "RS256" }))
+	if (err != nil) {
+		log.Println("Could not verify ID Token:", err)
+		return "", err
+	}
+	claims := parsedToken.Claims.(jwt.MapClaims)
+	now := float64(time.Now().Unix())
+	uid := claims["sub"].(string)
+	if claims["exp"].(float64) <= now || claims["iat"].(float64) > now || claims["aud"].(string) != FIREBASE_PROJECT_ID || claims["iss"].(string) != "https://securetoken.google.com/" + FIREBASE_PROJECT_ID || len(uid) == 0 || claims["auth_time"].(float64) >= now {
+		log.Println("Invalid ID Token")
+		return "", errors.New("Invalid ID Token")
+	}
+	return uid, nil
+}
+
+var db_write_lock sync.Mutex
+
+func registerHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		return
 	}
 
 	type Message struct {
-		Email string `json:"email"`
-		Role int `json:"role"`
+		DisplayName string `json:"displayName"`
+		IdToken string `json:"idtoken"`
 	}
 
 	/* TODO: This accepts input of the form
@@ -67,24 +103,18 @@ func (h *registerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if m.Role < USER || m.Role > ADMIN {
-		log.Println("Invalid role", m.Role)
+	if len(m.DisplayName) == 0 {
+		log.Println("Display name cannot be empty")
+		return
+	}
+
+	uid, err := verifyIdToken(m.IdToken)
+	if err != nil {
+		log.Println("Invalid ID Token:", err)
 		w.WriteHeader(http.StatusUnprocessableEntity) /* 422 Unprocessable Entity */
 		return
 	}
 
-	m.Email = strings.ToLower(m.Email)
-	e, err := mail.ParseAddress(m.Email)
-	if err != nil {
-		log.Println("Could not parse email address:", err, "This should never happen, firebase is validating emails.")
-		w.WriteHeader(http.StatusUnprocessableEntity) /* 422 Unprocessable Entity */
-		return
-	}
-	if e.Name != "" {
-		log.Println("Invalid email address. This should never happen, firebase is validating emails")
-		w.WriteHeader(http.StatusUnprocessableEntity) /* 422 Unprocessable Entity */
-		return
-	}
 	conn, err := sqlite3.Open("database.db")
 	if err != nil {
 		log.Println(err)
@@ -93,7 +123,7 @@ func (h *registerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	stmt, err := conn.Prepare(`SELECT role from users where email = ?`, m.Email)
+	stmt, err := conn.Prepare(`SELECT uid FROM clients WHERE uid = ? OR displayName = ?`, uid, m.DisplayName)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
@@ -107,12 +137,14 @@ func (h *registerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if hasRow {
-		log.Println("Email", m.Email, "already exists in the database")
+		log.Println("User already exists in the database")
 		w.WriteHeader(http.StatusConflict) /* 409 Conflict */
 		return
 	}
 
-	err = conn.Exec(`INSERT INTO users VALUES (?, ?)`, m.Email, m.Role)
+	db_write_lock.Lock()
+	err = conn.Exec(`INSERT INTO clients VALUES (?, ?, ?)`, uid, m.DisplayName, USER)
+	db_write_lock.Unlock()
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
@@ -127,7 +159,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Message struct {
-		Email string `json:"email"`
+		IdToken string `json:"idtoken"`
 	}
 
 	/* TODO: This accepts input of the form
@@ -141,14 +173,9 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	e, err := mail.ParseAddress(m.Email)
+	uid, err := verifyIdToken(m.IdToken)
 	if err != nil {
-		log.Println("Could not parse email address:", err)
-		w.WriteHeader(http.StatusUnprocessableEntity) /* 422 Unprocessable Entity */
-		return
-	}
-	if e.Name != "" {
-		log.Println("Invalid email address")
+		log.Println("Invalid ID Token:", err)
 		w.WriteHeader(http.StatusUnprocessableEntity) /* 422 Unprocessable Entity */
 		return
 	}
@@ -161,21 +188,22 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	stmt, err := conn.Prepare(`SELECT role from users where email = ?`, m.Email)
+	stmt, err := conn.Prepare(`SELECT role FROM clients WHERE uid = ?`, uid)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
 		return
 	}
-	hasRow, err := stmt.Step()
 	defer stmt.Close()
+
+	hasRow, err := stmt.Step()
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
 		return
 	}
 	if !hasRow {
-		log.Println("Email", m.Email, "does not exist in the database")
+		log.Println("Uid", uid, "does not exist in the database")
 		w.WriteHeader(http.StatusNotFound) /* 404 Not Found */
 		return
 	}
@@ -198,23 +226,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-/*func checkForUpgrade(headerValue []byte) (string, error) {
-	var starts []arr = 0
-	var ends []arr
-	if headerValue[0] == ',' {
-		return "", errors.New("Invalid header")
-	}
-	for i := 1; j < len(headerValue)-1; i++ {
-		if headerValue[i] == ',' {
-			if headerValue[i+1] == ' ' {
-				ends = append(ends, i+2)
-			} else {
-				ends = append(ends, i+1)
-			}
-		}
-	}
-}*/
-
+/* TODO: store this in database and put a mutex for writing */
 var msgs []string
 
 func sendmsgHandler(w http.ResponseWriter, r *http.Request) {
@@ -229,7 +241,6 @@ func sendmsgHandler(w http.ResponseWriter, r *http.Request) {
 
 func recvmsgHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
-//	w.Header().Set("Connection", "keep-alive")
 	index := 0
 	for {
 		if index == len(msgs) {
@@ -243,68 +254,219 @@ func recvmsgHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-/*func chatHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
+func sendDMHandler(w http.ResponseWriter, r *http.Request) {
+	type Message struct {
+		IdToken string `json:"idtoken"`
+		Sendto string `json:"sendto"`
+		Message string `json:"message"`
+	}
+
+	/* TODO: This accepts input of the form
+	 * {"a": 1, "b": 2}garbage
+	 * Think about whether this should be allowed */
+	var m Message
+	err := json.NewDecoder(r.Body).Decode(&m)
+	if err != nil {
+		log.Println("Could not decode JSON:", err)
+		w.WriteHeader(http.StatusUnprocessableEntity) /* 422 Unprocessable Entity */
 		return
 	}
-	if r.Header.Get("Upgrade") != "websocket" {
-		log.Println("Header \"Upgrade\" is not \"websocket\"")
+
+	from_uid, err := verifyIdToken(m.IdToken)
+	if err != nil {
+		log.Println("Invalid ID Token:", err)
+		w.WriteHeader(http.StatusUnprocessableEntity) /* 422 Unprocessable Entity */
 		return
 	}
-	connection := r.Header.Values("Connection")
-//	for i := 0; i < len(connection); i++ {
-//		if hasUpgrade(connection[i]) {
-//			goto 
-//		}
-/	}
-	if r.Header.Values("Connection") != "Upgrade" {
-		log.Println("Header \"Connection\" is not \"Upgrade\"")
-	}
-	key := r.Header.Get("Sec-WebSocket-Key")
-	if key == "" {
-		log.Println("Header \"Sec-WebSocket-Accept\" is empty")
+
+	conn, err := sqlite3.Open("database.db")
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
 		return
 	}
-	version := r.Header.Get("Sec-WebSocket-Version")
-	log.Println("websockets version:", version)
-	sha1sum := sha1.Sum([]byte(key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))
-	encoded := base64.StdEncoding.EncodeToString(sha1sum[:])
-	log.Println(encoded)
-	w.Header().Add("Upgrade", "websocket")
-	w.Header().Add("Connection", "Upgrade")
-	w.Header().Add("Sec-WebSocket-Accept", encoded)
-	w.WriteHeader(http.StatusSwitchingProtocols)
-			hj, ok := w.(http.Hijacker)
-		if !ok {
-			http.Error(w, "webserver doesn't support hijacking", http.StatusInternalServerError)
-			return
-		}
-		conn, _, err := hj.Hijack()
+	defer conn.Close()
+
+	stmt, err := conn.Prepare(`SELECT uid FROM clients WHERE displayName = ?`, m.Sendto)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
+		return
+	}
+	defer stmt.Close()
+
+	hasRow, err := stmt.Step()
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
+		return
+	}
+	if !hasRow {
+		log.Println("User does not exist in the database")
+		w.WriteHeader(http.StatusNotFound) /* 404 Not Found */
+		return
+	}
+
+	var to_uid string
+	err = stmt.Scan(&to_uid)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
+		return
+	}
+
+	db_write_lock.Lock()
+	err = conn.Exec(`INSERT INTO messages VALUES (STRFTIME('%s'), ?, ?, ?)`, from_uid, to_uid, m.Message)
+	db_write_lock.Unlock()
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
+		return
+	}
+	w.WriteHeader(http.StatusCreated) /* 201 Created */
+}
+
+func DMListHandler(w http.ResponseWriter, r *http.Request) {
+	type Message struct {
+		IdToken string `json:"idtoken"`
+	}
+
+	/* TODO: This accepts input of the form
+	 * {"a": 1, "b": 2}garbage
+	 * Think about whether this should be allowed */
+	var m Message
+	err := json.NewDecoder(r.Body).Decode(&m)
+	if err != nil {
+		log.Println("Could not decode JSON:", err)
+		w.WriteHeader(http.StatusUnprocessableEntity) /* 422 Unprocessable Entity */
+		return
+	}
+
+	uid, err := verifyIdToken(m.IdToken)
+	if err != nil {
+		log.Println("Invalid ID Token:", err)
+		w.WriteHeader(http.StatusUnprocessableEntity) /* 422 Unprocessable Entity */
+		return
+	}
+
+	conn, err := sqlite3.Open("database.db")
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
+		return
+	}
+	defer conn.Close()
+	stmt, err := conn.Prepare(`SELECT DISTINCT displayName FROM clients INNER JOIN messages ON clients.uid = messages.from_id OR clients.uid = messages.to_id WHERE (messages.from_id = ? OR messages.to_id = ?) AND clients.uid != ?`, uid, uid, uid)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
+		return
+	}
+	defer stmt.Close()
+
+	out := make([]string, 0);
+
+	for {
+		hasRow, err := stmt.Step()
 		if err != nil {
-			log.Println("cant hijack")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		// Don't forget to close the connection:
-		defer conn.Close()
-		var buf []byte
-		log.Println("here222")
-		n, err := conn.Read(buf)
-		if (err != nil) {
 			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
 			return
 		}
-		log.Println(buf, n)
-/*		bufrw.WriteString("Now we're speaking raw TCP. Say hi: ")
-		bufrw.Flush()
-		s, err := bufrw.ReadString('\n')
+		if !hasRow {
+			/* The query is finished */
+			break
+		}
+
+		var displayName string
+		err = stmt.Scan(&displayName)
 		if err != nil {
-			log.Printf("error reading string: %v", err)
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
 			return
 		}
-		fmt.Fprintf(bufrw, "You said: %q\nBye.\n", s)
-		bufrw.Flush()*/
-//}
+		out = append(out, displayName)
+	}
+
+	err = json.NewEncoder(w).Encode(out)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
+	}
+}
+
+func recvDMHandler(w http.ResponseWriter, r *http.Request) {
+	type Message struct {
+		IdToken string `json:"idtoken"`
+		RecvFrom string `json:"recvfrom"`
+		AfterTimestamp int `json:"afterTimestamp"`
+	}
+
+	/* TODO: This accepts input of the form
+	 * {"a": 1, "b": 2}garbage
+	 * Think about whether this should be allowed */
+	var m Message
+	err := json.NewDecoder(r.Body).Decode(&m)
+	if err != nil {
+		log.Println("Could not decode JSON:", err)
+		w.WriteHeader(http.StatusUnprocessableEntity) /* 422 Unprocessable Entity */
+		return
+	}
+	log.Println(m)
+
+	uid, err := verifyIdToken(m.IdToken)
+	if err != nil {
+		log.Println("Invalid ID Token:", err)
+		w.WriteHeader(http.StatusUnprocessableEntity) /* 422 Unprocessable Entity */
+		return
+	}
+
+	conn, err := sqlite3.Open("database.db")
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
+		return
+	}
+	defer conn.Close()
+	stmt, err := conn.Prepare(`SELECT displayName, message FROM clients INNER JOIN messages ON clients.uid = messages.from_id WHERE (clients.uid = ? OR clients.displayName = ?) AND messages.timestamp > ? ORDER BY messages.timestamp`, uid, m.RecvFrom, m.AfterTimestamp)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
+		return
+	}
+	defer stmt.Close()
+
+	out := make([]string, 0);
+
+	for {
+		hasRow, err := stmt.Step()
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
+			return
+		}
+		if !hasRow {
+			/* The query is finished */
+			break
+		}
+
+		var displayName string
+		var message string
+		err = stmt.Scan(&displayName, &message)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
+			return
+		}
+		out = append(out, displayName + ": " + message)
+	}
+
+	err = json.NewEncoder(w).Encode(out)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
+	}
+}
 
 func main() {
 	conn, err := sqlite3.Open("database.db")
@@ -317,25 +479,46 @@ func main() {
 		log.Fatal("Could not use WAL mode: ", err)
 	}
 
-	err = conn.Exec("CREATE TABLE users(email TEXT, role INTEGER, name TEXT, address TEXT)")
-	// TODO: find a better way to check existence of table
+	err = conn.Exec("PRAGMA busy_timeout=5000")
 	if err != nil {
-		/* Table already exists */
+		log.Fatal("Could not set busy timeout: ", err)
 	}
 
-	err = conn.Exec("CREATE TABLE points(email TEXT, points INTEGER)")
-	// TODO: find a better way to check existence of table
+	err = conn.Exec("CREATE TABLE IF NOT EXISTS clients(uid TEXT, displayName TEXT, role INTEGER)")
 	if err != nil {
-		/* Table already exists */
+		log.Fatal("Could not create table: ", err)
 	}
+
+	err = conn.Exec("CREATE TABLE IF NOT EXISTS messages(timestamp INTEGER, from_id TEXT, to_id TEXT, message TEXT)")
+	if err != nil {
+		log.Fatal("Could not create table: ", err)
+	}
+
+	/*err = conn.Exec("CREATE TABLE IF NOT EXISTS points(uid TEXT, points INTEGER)")
+	if err != nil {
+		log.Fatal("Could not create table: ", err)
+	}*/
+
+	conn.Close()
+
+	/* TODO: store keys in database, use Cache-Control */
+	resp, err := http.Get(
+		"https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com")
+	if err != nil {
+		log.Fatal("Could not get firebase keys: ", err)
+	}
+	json.NewDecoder(resp.Body).Decode(&keys)
 
 	/* Serve the frontend/dist directory */
 	http.Handle("/", http.FileServer(http.Dir("frontend/dist")))
 
-	http.Handle("/api/register", new(registerHandler))
+	http.HandleFunc("/api/register", registerHandler)
 	http.HandleFunc("/api/login", loginHandler)
-	http.HandleFunc("/sendmsg", sendmsgHandler)
-	http.HandleFunc("/recvmsg", recvmsgHandler)
+	http.HandleFunc("/api/sendmsg", sendmsgHandler)
+	http.HandleFunc("/api/recvmsg", recvmsgHandler)
+	http.HandleFunc("/api/senddm", sendDMHandler)
+	http.HandleFunc("/api/recvdm", recvDMHandler)
+	http.HandleFunc("/api/dmlist", DMListHandler)
 
 	log.Println("Listening at https://localhost:8000")
 	log.Fatal(http.ListenAndServeTLS(":8000", "server.crt", "server.key", nil))

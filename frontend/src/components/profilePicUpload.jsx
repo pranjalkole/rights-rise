@@ -1,3 +1,11 @@
+/**
+ * @source: https://github.com/pranjalkole/rights-rise
+ *
+ * @license AGPL-3.0-only
+ *
+ * Copyright (C) 2023  Hemant Kumar <ytbhemant@gmail.com>
+ */
+
 import { useRef } from "react";
 
 import ProfilePicture from "@dsalvagni/react-profile-picture";
@@ -5,11 +13,10 @@ import "@dsalvagni/react-profile-picture/dist/ProfilePicture.css";
 import "./profilePicUpload.css";
 
 export default function ProfilePictureUpload() {
-  /* Must be cast to any because ProfilePicture does not define types */
-  const profilePictureRef: any = useRef();
+  const profilePictureRef = useRef();
 
   function handleUpload() {
-    const PP = profilePictureRef.current!;
+    const PP = profilePictureRef.current;
     const imageData = PP.getData();
     const file = imageData.file;
     const imageAsDataURL = PP.getImageAsDataUrl();

@@ -2,6 +2,10 @@ database.db
 database.db-shm
 database.db-wal
 rights-rise
+server.crt
+server.key
 frontend/node_modules
 frontend/dist
 frontend/tsconfig.tsbuildinfo
+frontend/package.json
+frontend/package-lock.json

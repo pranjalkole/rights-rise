@@ -76,17 +76,22 @@ function RegisterBody() {
   function formSubmit(e: React.FormEvent<HTMLFormElement>) {
     setState(State.Loading);
     e.preventDefault();
-    const email = e.currentTarget.email;
+    const email = e.currentTarget.email.value;
+    const displayName = e.currentTarget.displayName.value;
+    console.log(email);
     if (passwords[0] != passwords[1]) {
       alert("Password and Confirmed Password do not match!");
       return;
     }
 
-    registerUser(email.value, passwords[0])
-      .then(() => {
+    registerUser(email, passwords[0])
+      .then(async (userCredential) => {
         const data = {
-          email: email.value,
+          email: email,
+          displayName: displayName,
           // role: role,
+          idtoken: await userCredential.user.getIdToken()
+          // TODO: wrap in try catch
         };
         fetch("/api/register", {
           method: "POST",
@@ -95,7 +100,11 @@ function RegisterBody() {
           },
           body: JSON.stringify(data),
         }).then((response) => {
-          if (response.status != 201) {
+          if (response.status == 422) {
+            alert("Invalid form data");
+            setState(State.Form);
+            return;
+          } else if (response.status != 201) {
             alert("Bug in application, see console");
             console.log(response);
             setState(State.Form);
@@ -126,15 +135,11 @@ function RegisterBody() {
   }
 
   function passwordChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const newPasswords = [...passwords];
-    newPasswords[0] = e.target.value;
-    setPasswords(newPasswords);
+    setPasswords([e.target.value, passwords[1]]);
   }
 
   function cnfpasswordChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const newPasswords = [...passwords];
-    newPasswords[1] = e.target.value;
-    setPasswords(newPasswords);
+    setPasswords([passwords[0], e.target.value]);
   }
 
   return (
