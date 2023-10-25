@@ -7,5 +7,4 @@ server.key
 frontend/node_modules
 frontend/dist
 frontend/tsconfig.tsbuildinfo
-frontend/package.json
 frontend/package-lock.json
