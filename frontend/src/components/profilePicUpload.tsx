@@ -9,8 +9,6 @@
 
 import React, { Component } from "react";
 
-import ProfilePicture from "@dsalvagni/react-profile-picture";
-import "@dsalvagni/react-profile-picture/dist/ProfilePicture.css";
 import "./profilePicUpload.css";
 
 export default class ProfilePictureUpload extends Component {
@@ -28,25 +26,7 @@ export default class ProfilePictureUpload extends Component {
   render() {
     return (
       <div className="profilePicEdit">
-        <ProfilePicture
-          ref={this.profilePictureRef}
-          frameFormat="circle"
-          minImageSize={0}
-          useHelper={true}
-          debug={false}
-          messages={{
-            DEFAULT: "",
-            DRAGOVER: "Drop your photo",
-            INVALID_FILE_TYPE: "Only images allowed.",
-            INVALID_IMAGE_SIZE: "Your photo must be larger than 1kb.",
-          }}
-        />
-        <button
-          onClick={this.handleUpload}
-          style={{ display: "none" }}
-        >
-          Upload
-        </button>
+        (Will Update This with Profile Pic Upload)
       </div>
     );
   }

@@ -11,7 +11,6 @@ import { initializeApp } from "firebase/app";
 import {
   getAuth,
   createUserWithEmailAndPassword,
-  sendEmailVerification,
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -31,7 +30,6 @@ export const auth = getAuth(app);
 export function registerUser(email: string, password: string) {
   return createUserWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
-      sendEmailVerification(userCredential.user);
       return userCredential;
     });
 }

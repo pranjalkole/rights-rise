@@ -13,13 +13,13 @@ Build with `make` and run with `./rights-rise`.
 If you are running a non-POSIX system, generate an SSL certificate at server.{cert,key}, build the go binary with `go build` and frontend with `cd frontend && npm install && npm run build`.
 
 ### Todo
-[ ] Auth and profile management
-[ ] User Dashboard
-[ ] Admin Dashboard
-[ ] A Game (maybe more later)
-[ ] AI Chatbot
-[ ] Rewards and Coupons
-[ ] Share Achievements as Personalised Images
+- [ ] Auth and profile management
+- [ ] User Dashboard
+- [ ] Admin Dashboard
+- [ ] A Game (maybe more later)
+- [ ] AI Chatbot
+- [ ] Rewards and Coupons
+- [ ] Share Achievements as Personalised Images
 
 ## Problem Statement
 **Development of gamified platform on Children's Rights to increase legal literacy and awareness among children in India**

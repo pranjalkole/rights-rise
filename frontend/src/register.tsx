@@ -48,12 +48,9 @@ function RegisterBody() {
       <form id="register" className="main-form">
         <div className="successful flexbox">
           <i className="fas fa-check-circle"></i>
-          <h2>Registration successful</h2>
-          <p>
-            Email verification sent successfully. Please verify your email and
-            login to continue.
-          </p>
-          <a href="login.html" className="login-flow">
+          <h2>Registration Successful</h2>
+          <p>please login to continue.</p>
+          <a href="/login" className="login-flow">
             Login
           </a>
         </div>
@@ -77,7 +74,7 @@ function RegisterBody() {
     setState(State.Loading);
     e.preventDefault();
     const email = e.currentTarget.email.value;
-    const displayName = e.currentTarget.displayName.value;
+    // const displayName = e.currentTarget.displayName.value;
     console.log(email);
     if (passwords[0] != passwords[1]) {
       alert("Password and Confirmed Password do not match!");
@@ -88,9 +85,9 @@ function RegisterBody() {
       .then(async (userCredential) => {
         const data = {
           email: email,
-          displayName: displayName,
+          // displayName: displayName,
           // role: role,
-          idtoken: await userCredential.user.getIdToken()
+          idtoken: await userCredential.user.getIdToken(),
           // TODO: wrap in try catch
         };
         fetch("/api/register", {
@@ -146,10 +143,7 @@ function RegisterBody() {
     <form id="register" className="main-form" onSubmit={formSubmit}>
       <div className="container flexbox">
         <h1>Register</h1>
-        <div className="input-container">
-          <label htmlFor="displayName">Display Name</label>
-          <input type="text" name="displayName" id="displayName" required />
-        </div>
+
         <div className="input-container">
           <label htmlFor="email">Email</label>
           <input type="email" name="email" id="email" required />

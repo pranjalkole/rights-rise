@@ -73,6 +73,11 @@ function FormElement() {
           <label htmlFor="name">Name</label>
           <input type="text" name="name" id="name" required />
         </div>
+
+        <div className="input-container">
+          <label htmlFor="institute">School / Institute Name</label>
+          <input type="text" name="institute" id="institute" required />
+        </div>
         <div className="input-container age-input">
           <label htmlFor="age">Age</label>
           <input type="number" name="age" id="age" required />
