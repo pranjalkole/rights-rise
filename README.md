@@ -8,9 +8,8 @@
 
 ### Installation
 Fetch npm dependencies with `make fetch`.
-Generate SSL certificate with `make cert`.
 Build with `make` and run with `./rights-rise`.
-If you are running a non-POSIX system, generate an SSL certificate at server.{cert,key}, build the go binary with `go build` and frontend with `cd frontend && npm install && npm run build`.
+If you are running a non-POSIX system, build the go binary with `go build` and frontend with `cd frontend && npm install && npm run build`.
 
 ### Todo
 - [x] Auth and profile management

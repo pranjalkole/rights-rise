@@ -2,8 +2,7 @@ database.db
 database.db-shm
 database.db-wal
 rights-rise
-server.crt
-server.key
+rights-rise.exe
 frontend/node_modules
 frontend/dist
 frontend/tsconfig.tsbuildinfo

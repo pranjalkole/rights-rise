@@ -514,6 +514,6 @@ func main() {
 	http.HandleFunc("/api/recvdm", recvDMHandler)
 	http.HandleFunc("/api/dmlist", DMListHandler)
 
-	log.Println("Listening at https://localhost:8000")
-	log.Fatal(http.ListenAndServeTLS(":8000", "server.crt", "server.key", nil))
+	log.Println("Listening at http://localhost:8000")
+	log.Fatal(http.ListenAndServe(":8000", nil))
 }
