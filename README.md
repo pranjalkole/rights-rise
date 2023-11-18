@@ -13,8 +13,8 @@ Build with `make` and run with `./rights-rise`.
 If you are running a non-POSIX system, generate an SSL certificate at server.{cert,key}, build the go binary with `go build` and frontend with `cd frontend && npm install && npm run build`.
 
 ### Todo
-- [ ] Auth and profile management
-- [ ] User Dashboard
+- [x] Auth and profile management
+- [x] User Dashboard
 - [ ] Admin Dashboard
 - [ ] A Game (maybe more later)
 - [ ] AI Chatbot
