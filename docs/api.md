@@ -12,6 +12,7 @@ Request:
 - idtoken string
 
 Response:
+- displayName string
 - role int
 
 ## /api/sendmsg
