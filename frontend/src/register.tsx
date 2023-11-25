@@ -14,6 +14,8 @@ import ReactDOM from "react-dom/client";
 import "./form.css";
 import "./all.css";
 
+const ROLE_USER = 0;
+
 function Spinner({ style }: { style: React.CSSProperties }) {
   return (
     <div className="loader" style={style}>
@@ -73,11 +75,12 @@ function RegisterBody() {
   function formSubmit(e: React.FormEvent<HTMLFormElement>) {
     setState(State.Loading);
     e.preventDefault();
-    const email = e.currentTarget.email.value;
-    // const displayName = e.currentTarget.displayName.value;
-    console.log(email);
+    const form = e.currentTarget;
+    const email = form.email.value;
+    const displayName = form.displayName.value;
     if (passwords[0] != passwords[1]) {
       alert("Password and Confirmed Password do not match!");
+      setState(State.Form);
       return;
     }
 
@@ -85,8 +88,8 @@ function RegisterBody() {
       .then(async (userCredential) => {
         const data = {
           email: email,
-          // displayName: displayName,
-          // role: role,
+          displayName: displayName,
+          role: ROLE_USER,
           idtoken: await userCredential.user.getIdToken(),
           // TODO: wrap in try catch
         };
@@ -144,6 +147,10 @@ function RegisterBody() {
       <div className="container flexbox">
         <h1>Register</h1>
 
+        <div className="input-container">
+          <label htmlFor="displayName">Name</label>
+          <input name="displayName" id="displayName" required />
+        </div>
         <div className="input-container">
           <label htmlFor="email">Email</label>
           <input type="email" name="email" id="email" required />

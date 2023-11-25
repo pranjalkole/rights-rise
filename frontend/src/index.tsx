@@ -223,6 +223,9 @@ function App() {
             <input type="submit" value="Send" />
           </form>
         </div>
+        { signedIn &&
+        <h1><a href="/home/">Home</a></h1>
+        }
         {signedIn && (
           <>
             <h1>Your chats</h1>

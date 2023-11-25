@@ -188,7 +188,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	stmt, err := conn.Prepare(`SELECT role FROM clients WHERE uid = ?`, uid)
+	stmt, err := conn.Prepare(`SELECT displayName, role FROM clients WHERE uid = ?`, uid)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
@@ -208,17 +208,24 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var displayName string
 	var role int
-	err = stmt.Scan(&role)
+	err = stmt.Scan(&displayName, &role)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError) /* 500 Internal Server Error */
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(map[string]int{
-		"role": role,
-	})
+	type MessageOut struct {
+		DisplayName string `json:"displayName"`
+		Role int `json:"role"`
+	}
+	var m_out MessageOut
+	m_out.DisplayName = displayName
+	m_out.Role = role
+
+	err = json.NewEncoder(w).Encode(m_out)
 
 	if err != nil {
 		log.Println(err)
