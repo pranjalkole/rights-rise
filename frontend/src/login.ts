@@ -62,7 +62,8 @@ login_form.addEventListener("submit", (e: Event) => {
       } else {
         loader.style.display = "none";
         (login_form.querySelector(".container")! as HTMLElement).style.display = "none";
-        (login_form.querySelector(".success")! as HTMLElement).style.display = "flex";
+        (login_form.querySelector(".successful")! as HTMLElement).style.display = "flex";
+        window.location.href = "/";
       }
     })
     .catch((error) => {

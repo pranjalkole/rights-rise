@@ -3,108 +3,31 @@
  *
  * @license AGPL-3.0-only
  *
+ * Copyright (C) 2023  Hemant Kumar <ytbhemant@gmail.com>
  * Copyright (C) 2023  Pranjal Kole <pranjal.kole7@gmail.com>
  */
 
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./firebase.ts";
-// import { Role } from "./misc.ts"
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
-import "./index.css";
+import "./all.css";
+import "../style.css";
 
-let displayName: string;
-let email: string;
-let role: string;
-let idToken: string;
-let chats: string[];
-let emailVerified: boolean;
-
-function Header({
-  signedIn,
-  handleLogout,
-}: {
-  signedIn: boolean;
-  handleLogout: React.MouseEventHandler<HTMLAnchorElement>;
-}) {
-  return (
-    <header>
-      <h1>RightsRise</h1>
-      {signedIn ? (
-        <div>
-          <>{displayName}</>|
-          <a href="#" onClick={handleLogout}>
-            Logout
-          </a>
-        </div>
-      ) : (
-        <div>
-          <a href="/login.html">Login</a>|<a href="/register.html">Register</a>
-        </div>
-      )}
-    </header>
-  );
-}
-
-function Footer() {
-  return (
-    <footer>
-      <h1>Game Icon</h1>
-    </footer>
-  );
-}
-
-function Spinner() {
-  return (
-    <div className="loader">
-      <div className="spinner"></div>
-    </div>
-  );
-}
+let email;
+let idToken;
 
 function App() {
-  enum State {
-    Normal,
-    Chat,
-  }
-  const [loading, setLoading] = useState(true);
-  const [signedIn, setSignedIn] = useState(false);
-  const [messages, setMessages] = useState<string[]>([]);
-  const [state, setState] = useState(State.Normal);
-  const [chat, setChat] = useState("");
-
-  useEffect(() => {
-    if (!signedIn || state != State.Chat) return;
-    const interval = setInterval(async () => {
-      const response = await fetch("/api/recvdm", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          idtoken: idToken,
-          recvfrom: chat,
-          afterTimestamp: 0,
-        }),
-      });
-      setMessages(await response.json());
-    }, 1000);
-    return () => {
-      clearInterval(interval);
-    };
-  }, [signedIn, chat]);
+  const [displayName, setDisplayName] = useState("");
 
   useEffect(() => {
     return onAuthStateChanged(auth, async (user) => {
-      setLoading(true);
       if (!user) {
-        setSignedIn(false);
-        setLoading(false);
+        window.location.href = "/login.html";
         return;
       }
-      displayName = user.displayName!;
+      console.log(user);
       email = user.email!;
-      emailVerified = user.emailVerified;
       idToken = await user.getIdToken(); /* TODO: wrap in try catch */
       const data = {
         email: email,
@@ -119,54 +42,25 @@ function App() {
       })
         .then((response) => {
           if (response.status !== 200) {
-            role = "Email does not exist in database"; // TODO
-            setLoading(false);
+            alert("Email does not exist in database"); // TODO
             return;
           }
           response.json().then((data) => {
+            setDisplayName(data.displayName);
             console.log(data);
           });
         })
         .catch((error) => {
           alert("Could not fetch role from database, see console");
           console.log(error);
-          setLoading(false);
           return;
         });
-
-      await fetch("/api/dmlist", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          idtoken: idToken,
-        }),
-      })
-        .then(async (response) => {
-          chats = await response.json(); /* TODO: wrap in try catch */
-          setSignedIn(true);
-        })
-        .catch((error) => {
-          alert("Could not fetch DM list from database, see console");
-          console.log(error);
-        });
-      setLoading(false);
     });
   }, []);
-
-  useEffect(() => {
-    const evSource = new EventSource("/api/recvmsg");
-    evSource.onmessage = (event) => {
-      setMessages((messages) => [...messages, event.data]);
-    };
-  }, []);
-
   function handleLogout() {
-    setLoading(true);
     signOut(auth)
       .then(() => {
-        setLoading(false);
+        window.location.href = "/login.html";
       })
       .catch((error) => {
         let message;
@@ -178,114 +72,176 @@ function App() {
           console.log(error);
         }
         alert(message);
-        setLoading(false);
       });
   }
-
-  if (loading) {
-    return <Spinner />;
+  if (displayName == "") {
+    return <h1>Loading...</h1>;
   }
-
-  function formSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const message =
-      (signedIn ? displayName : "Anon") + ": " + e.currentTarget.message.value;
-    e.currentTarget.message.value = "";
-    fetch("/api/sendmsg", {
-      method: "POST",
-      body: message,
-    });
-  }
-
-  if (state == State.Normal) {
-    return (
-      <>
-        <Header signedIn={signedIn} handleLogout={handleLogout} />
-        {signedIn ? (
-          <>
-            <p>
-              Signed in as {email} ({role}). Your email is{" "}
-              {!emailVerified && <>not</>} verified
-            </p>
-            <a href="#" onClick={handleLogout}>
-              Logout
-            </a>
-          </>
-        ) : (
-          <p>You are logged out</p>
-        )}
-        <div id="chat">
-          {messages.map((message) => (
-            <p>{message}</p>
-          ))}
-          <form onSubmit={formSubmit}>
-            <input id="message" />
-            <input type="submit" value="Send" />
-          </form>
-        </div>
-        { signedIn &&
-        <h1><a href="/home/">Home</a></h1>
-        }
-        {signedIn && (
-          <>
-            <h1>Your chats</h1>
-            {chats.length != 0 ? (
-              chats.map((chat) => (
-                <a
-                  href="#"
-                  onClick={() => {
-                    setChat(chat);
-                    setState(State.Chat);
-                    setMessages([]);
-                  }}
-                >
-                  {chat}
-                </a>
-              ))
-            ) : (
-              <p>You have no chats</p>
-            )}
-          </>
-        )}
-        <Footer />
-      </>
-    );
-  }
-
-  function handleSendDM(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    fetch("/api/senddm", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        idtoken: idToken,
-        sendto: chat,
-        message: event.currentTarget.message.value,
-      }),
-    }); /* TODO: handle errors */
-  }
-
-  /* state is State.Chat */
   return (
     <>
-      <Header signedIn={signedIn} handleLogout={handleLogout} />
-      <a href="#" onClick={() => setState(State.Normal)}>
-        Back
-      </a>
-      <h1>{chat}</h1>
-      <p>Messages</p>
-      {messages.length != 0 ? (
-        messages.map((message) => <p>{message}</p>)
-      ) : (
-        <p>No messages</p>
-      )}
-      <form onSubmit={handleSendDM}>
-        <input name="message" id="message" />
-        <button>Send</button>
-      </form>
-      <Footer />
+      <header>
+        <h1>RightsRise</h1>
+        <div className="flexbox nav">
+          <a href="/updateProfile.html" className="updateProfile">
+            <div className="fa fa-cog"></div>
+          </a>
+          <a href="#" onClick={handleLogout}>
+            <div className="fa fa-sign-out"></div>
+          </a>
+        </div>
+      </header>
+      <div className="main flexbox">
+        <div className="full-width flexbox summary">
+          <img src="media/avatar.png" alt="" className="avatar" />
+
+          <div className="info">
+            <div className="name">{displayName}</div>
+            <div className="institute">Himalaya Valley High School, Patna</div>
+          </div>
+          <div className="flexbox stats">
+            <div className="flexbox hexagon points">
+              <span>Points</span>
+              <div id="points">1098</div>
+            </div>
+            <div className="flexbox hexagon rank">
+              <span>Rank</span>
+              <div id="rank">19</div>
+            </div>
+          </div>
+        </div>
+        <div className="half-width-container">
+          <div className="flexbox half-width badges">
+            <div className="title">Your Badges</div>
+            <div className="flexbox">
+              <img src="media/badges/l4.png" alt="badges" className="badge" />
+              <img
+                src="media/badges/active.png"
+                alt="badges"
+                className="badge"
+              />
+              <img
+                src="media/badges/wizard.png"
+                alt="badges"
+                className="badge"
+              />
+              <img
+                src="media/badges/contributor.png"
+                alt="badges"
+                className="badge"
+              />
+            </div>
+          </div>
+          <div className="flexbox half-width leaderboard">
+            <div className="title">Leaderboard</div>
+            <table>
+              <tr>
+                <td></td>
+                <td>
+                  <img src="media/avatar.png" alt="profile photo" />
+                  <span>Aarav Patel</span>
+                </td>
+                <td>1500</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>
+                  <img src="media/avatar.png" alt="profile photo" />
+                  <span>Ananya Sharma</span>
+                </td>
+                <td>1458</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>
+                  <img src="media/avatar.png" alt="profile photo" />
+                  <span>Aryan Gupta</span>
+                </td>
+                <td>1457</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>
+                  <img src="media/avatar.png" alt="profile photo" />
+                  <span>Ishaan Verma</span>
+                </td>
+                <td>1300</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>
+                  <img src="media/avatar.png" alt="profile photo" />
+                  <span>Neha Singh</span>
+                </td>
+                <td>1266</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>
+                  <img src="media/avatar.png" alt="profile photo" />
+                  <span>Mira Patel</span>
+                </td>
+                <td>1266</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>
+                  <img src="media/avatar.png" alt="profile photo" />
+                  <span>Rahul Kumar</span>
+                </td>
+                <td>1200</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>
+                  <img src="media/avatar.png" alt="profile photo" />
+                  <span>Kavya Gupta</span>
+                </td>
+                <td>1195</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>
+                  <img src="media/avatar.png" alt="profile photo" />
+                  <span>Aditya Joshi</span>
+                </td>
+                <td>1150</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>
+                  <img src="media/avatar.png" alt="profile photo" />
+                  <span>Sanya Shah</span>
+                </td>
+                <td>1147</td>
+              </tr>
+            </table>
+          </div>
+          <div className="flexbox half-width tools">
+            <div className="title">Tools</div>
+          </div>
+        </div>
+      </div>
+      <div className="flexbox bottom-nav">
+        <a href="/">
+          <span className="description">Home</span>
+          <i className="fa fa-house"></i>
+        </a>
+        <a href="/quiz">
+          <span className="description">Quiz</span>
+          <i className="fa fa-list-check"></i>
+        </a>
+        <a href="/game" className="game-button">
+          <i className="fa-solid fa-gamepad"></i>
+        </a>
+        <a href="/ask">
+          <span className="description">Ask</span>
+          <i className="fas fa-comments"></i>
+        </a>
+        <a href="/rewards">
+          <span className="description">Rewards</span>
+          <i className="fa-solid fa-award"></i>
+        </a>
+      </div>
     </>
   );
 }

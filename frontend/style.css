@@ -47,14 +47,17 @@ header h1 {
   text-align: center;
   color: #4f004f;
 }
-header .updateProfile {
+header .nav {
+  gap: 30px;
   position: absolute;
   right: 30px;
   top: 50%;
   transform: translateY(-50%);
-
+}
+header a {
   font-size: 1.2em;
   color: black;
+  text-decoration: none;
 }
 .main {
   width: 100%;

@@ -1,13 +1,15 @@
-.profilePicEdit {
-  position: relative;
+.profilePicEdit label {
+  cursor: pointer;
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  height: 100px;
+  width: 100px;
+  border: 1px solid rgba(0, 0, 0, 0.377);
 }
-.profilePicEdit button.eXEoGG26iwSi6UiZD8FI6 {
-  background-image: url("/avatar.png");
-  background-size: contain;
-  background-position: center;
-  transition: filter 0.5s;
-}
-
-.profilePicEdit button.eXEoGG26iwSi6UiZD8FI6:hover {
-  filter: blur(20px);
+.profilePicEdit label img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
 }

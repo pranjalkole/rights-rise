@@ -52,7 +52,7 @@ function RegisterBody() {
           <i className="fas fa-check-circle"></i>
           <h2>Registration Successful</h2>
           <p>please login to continue.</p>
-          <a href="/login" className="login-flow">
+          <a href="/login.html" className="login-flow">
             Login
           </a>
         </div>

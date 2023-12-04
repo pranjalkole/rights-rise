@@ -1,0 +1,3 @@
+- set paths from rollup of vite-config on backend also
+- if there is a profile picture already, use it as avatar in updateProfile.html
+- console.log(reader.result);
