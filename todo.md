@@ -1,3 +1,3 @@
-- set paths from rollup of vite-config on backend also
+- look for console.log(reader.result) on updateProfile.html and store image(already present in base64) on database.
 - if there is a profile picture already, use it as avatar in updateProfile.html
-- console.log(reader.result);
+- implement routes from rollup of vite-config on backend also
